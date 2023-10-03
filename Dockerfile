@@ -1,13 +1,11 @@
-ARG JDK_VERSION=17-oraclelinux8
-FROM openjdk:${JDK_VERSION}
+ARG JDK_VERSION=17-alpine
+FROM eclipse-temurin:${JDK_VERSION}
 
 LABEL maintener="Dimas Maryanto <software.dimas_m@icloud.com>"
 
 ENV SERVER_PORT=8080
 
-RUN microdnf update -y
-
-WORKDIR /usr/local/share/applications
+WORKDIR /usr/share/applications
 
 ARG JAR_FILE="spring3-devsecops-example.jar"
 COPY target/${JAR_FILE} spring-boot.jar
