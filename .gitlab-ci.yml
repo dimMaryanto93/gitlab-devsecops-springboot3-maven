@@ -165,7 +165,8 @@ container_scanning:
     CS_REGISTRY_INSECURE: "true"
     CS_DISABLE_DEPENDENCY_LIST: "true"
     CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
-    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+#    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA ## this variable not detect by container scanning
+    CS_IMAGE: private.nexus-registry.docker.local:8087/com.maryanto.dimas.example/spring3-devsecops-example:$CI_COMMIT_SHORT_SHA # FIXME changed this line
   artifacts:
     reports:
       container_scanning: 'gl-container-scanning-report.json'
