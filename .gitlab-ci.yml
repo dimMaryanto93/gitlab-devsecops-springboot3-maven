@@ -59,10 +59,7 @@ sonarcloud-check:
     paths:
       - .sonar/cache
   script:
-    - sonar-scanner \
-      -Dsonar.projectVersion='$CI_COMMIT_REF_SLUG' \
-      -Dsonar.host.url='${SONAR_URL}' \
-      -Dsonar.login='${AUTH_SONAR}'
+    - sonar-scanner -Dsonar.projectVersion='$CI_COMMIT_REF_SLUG' -Dsonar.host.url='${SONAR_URL}' -Dsonar.login='${AUTH_SONAR}'
   rules:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
