@@ -17,9 +17,6 @@ variables:
   DOCKER_VERSION: "stable"
   DOCKER_DIND_VERSION: "18.09-dind"
 
-#include:
-#  - template: Security/Container-Scanning.gitlab-ci.yml
-
 get-fact-project-info:
   image: maven:${MAVEN_JDK_VERSION}
   cache:
@@ -143,6 +140,9 @@ build-docker:
           echo "--------------------------------";
       done
 
+include:
+  - template: Security/Container-Scanning.gitlab-ci.yml
+
 container_scanning:
   stage: publish
   needs:
@@ -159,3 +159,6 @@ container_scanning:
     CS_DISABLE_DEPENDENCY_LIST: "true"
     CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
     CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  artifacts:
+    reports:
+      container_scanning: 'gl-container-scanning-report.json'
