@@ -162,10 +162,10 @@ container_scanning:
     SECURE_LOG_LEVEL: debug
     CS_DOCKER_INSECURE: "true"
     CS_REGISTRY_INSECURE: "true"
-    CI_REGISTRY_IMAGE: private.nexus-registry.docker.local:8087/$CI_REGISTRY_IMAGE_NAME
+    CI_REGISTRY_IMAGE: private.nexus-registry.docker.local:8087/$(CI_REGISTRY_IMAGE_NAME)
     CS_DISABLE_DEPENDENCY_LIST: "true"
     CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
-    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_REGISTRY_IMAGE_VERSION
+    CS_IMAGE: $(CI_REGISTRY_IMAGE):$(CI_REGISTRY_IMAGE_VERSION)
   artifacts:
     reports:
       container_scanning: 'gl-container-scanning-report.json'
