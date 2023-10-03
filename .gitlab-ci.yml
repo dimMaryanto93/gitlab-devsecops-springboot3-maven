@@ -145,7 +145,12 @@ build-docker:
 
 container_scanning:
   stage: scanning
+  needs:
+    - build-docker
   variables:
+    GIT_STRATEGY: 1
+    CS_DOCKERFILE_PATH: Dockerfile
+    SECURE_LOG_LEVEL: debug
     CS_DISABLE_DEPENDENCY_LIST: "true"
     CS_DEFAULT_BRANCH_IMAGE: private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME:$CI_COMMIT_REF_SLUG
     CS_IMAGE: private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME:$CI_COMMIT_SHA
