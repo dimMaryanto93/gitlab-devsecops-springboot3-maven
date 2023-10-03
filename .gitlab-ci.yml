@@ -165,7 +165,9 @@ container_scanning:
       container_scanning: 'gl-container-scanning-report.json'
 
 build-configmap:
-  stage: build
+  stage: deploy
+  needs:
+    - build-docker
   extends: .kustomize-build
   resource_group: deploy/review
   variables:
