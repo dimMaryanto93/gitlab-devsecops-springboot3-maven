@@ -143,16 +143,21 @@ build-docker:
           echo "--------------------------------";
       done
 
-#container_scanning:
-#  stage: publish
-#  needs:
-#    - build-docker
-#  variables:
-#    GIT_STRATEGY: 1
-#    SECURE_LOG_LEVEL: debug
-#    CS_DOCKER_INSECURE: "true"
-#    CS_REGISTRY_INSECURE: "true"
-#    CI_REGISTRY_IMAGE: private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME
-#    CS_DISABLE_DEPENDENCY_LIST: "true"
-#    CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
-#    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+container_scanning:
+  stage: publish
+  tags:
+    - docker_host
+  needs:
+    - build-docker
+  variables:
+    GIT_STRATEGY: 1
+    SECURE_LOG_LEVEL: debug
+    CS_DOCKER_INSECURE: "true"
+    CS_REGISTRY_INSECURE: "true"
+    CI_REGISTRY_IMAGE: private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME
+    CS_DISABLE_DEPENDENCY_LIST: "true"
+    CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
+    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  artifacts:
+    reports:
+      container_scanning: ['**/gl-sbom-*.cdx.json', 'gl-container-scanning-report.json', 'gl-dependency-scanning-report.json']
