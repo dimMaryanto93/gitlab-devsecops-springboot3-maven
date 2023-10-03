@@ -1,5 +1,6 @@
 stages:
   - pre-build
+  - verify
   - test
   - build
   - publish
@@ -40,6 +41,32 @@ get-fact-project-info:
       - deploy.env
     reports:
       dotenv: deploy.env
+
+sonarcloud-check:
+  stage: verify
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "1"
+    SONAR_SCANNER_OPTS: "-Xmx512m"
+    SONAR_SRC_DIR: "src"
+  needs:
+    - get-fact-project-info
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  cache:
+    key: "${PROJECT_GROUP_ID}-${PROJECT_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner -Dsonar.organization=${PROJECT_GROUP_ID} \
+      -Dsonar.projectKey=${PROJECT_GROUP_ID}.${PROJECT_NAME} \
+      -Dsonar.sources=${SONAR_SRC_DIR} \
+      -Dsonar.projectBaseDir=${CI_PROJECT_DIR} \
+      -Dsonar.host.url=${SONAR_URL} \
+      -Dsonar.login=$AUTH_SONAR
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
 test-junit:
   image: maven:${MAVEN_JDK_VERSION}
