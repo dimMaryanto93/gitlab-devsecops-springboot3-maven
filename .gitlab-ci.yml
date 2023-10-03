@@ -61,20 +61,6 @@ test-junit:
         - target/surefire-reports/TEST-*.xml
         - target/failsafe-reports/TEST-*.xml
 
-coverage-testunit:
-  stage: verify
-  image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.9
-  script:
-    # convert report from jacoco to cobertura, using relative project path
-    - python /opt/cover2cover.py target/site/jacoco/jacoco.xml $CI_PROJECT_DIR/src/main/java/ > target/site/cobertura.xml
-  needs:
-    - test-junit
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: target/site/cobertura.xml
-
 sonarqube-check:
   stage: verify
   variables:
@@ -90,7 +76,7 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script:
-    - mvn verify sonar:sonar -Dsonar.projectBaseDir="${CI_PROJECT_DIR}" -Dsonar.host.url="${SONAR_URL}" -Dsonar.token="${SONAR_AUTH}"
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS verify sonar:sonar -Dsonar.projectBaseDir="${CI_PROJECT_DIR}" -Dsonar.host.url="${SONAR_URL}" -Dsonar.token="${SONAR_AUTH}"
   rules:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
