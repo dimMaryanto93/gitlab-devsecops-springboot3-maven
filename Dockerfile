@@ -5,6 +5,8 @@ LABEL maintener="Dimas Maryanto <software.dimas_m@icloud.com>"
 
 ENV SERVER_PORT=8080
 
+RUN microdnf update -y
+
 WORKDIR /usr/local/share/applications
 
 ARG JAR_FILE="spring3-devsecops-example.jar"
