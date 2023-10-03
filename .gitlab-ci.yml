@@ -4,6 +4,7 @@ stages:
   - test
   - build
   - publish
+  - scanning
   - deploy
 
 default:
@@ -15,6 +16,9 @@ variables:
   MAVEN_JDK_VERSION: "3.8.5-openjdk-17"
   DOCKER_VERSION: "stable"
   DOCKER_DIND_VERSION: "18.09-dind"
+
+include:
+  - template: Security/Container-Scanning.gitlab-ci.yml
 
 get-fact-project-info:
   image: maven:${MAVEN_JDK_VERSION}
@@ -138,3 +142,10 @@ build-docker:
           docker --config .docker image push $TAG:$CI_COMMIT_SHORT_SHA
           echo "--------------------------------";
       done
+
+container_scanning:
+  stage: scanning
+  variables:
+    CS_DISABLE_DEPENDENCY_LIST: "true"
+    CS_DEFAULT_BRANCH_IMAGE: private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME:$CI_COMMIT_REF_SLUG
+    CS_IMAGE: private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME:$CI_COMMIT_SHA
