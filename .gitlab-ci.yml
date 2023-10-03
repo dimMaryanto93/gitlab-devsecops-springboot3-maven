@@ -59,7 +59,7 @@ sonarcloud-check:
     paths:
       - .sonar/cache
   script:
-    - sonar-scanner -Dsonar.organization="${PROJECT_GROUP_ID}" -Dsonar.projectKey="${PROJECT_GROUP_ID}.${PROJECT_NAME}" -Dsonar.sources="${SONAR_SRC_DIR}" -Dsonar.projectBaseDir="${CI_PROJECT_DIR}" -Dsonar.host.url="${SONAR_URL}" -Dsonar.token="${AUTH_SONAR}"
+    - sonar-scanner -Dsonar.organization="${PROJECT_GROUP_ID}" -Dsonar.projectKey="${PROJECT_GROUP_ID}.${PROJECT_NAME}" -Dsonar.sources="${SONAR_SRC_DIR}" -Dsonar.projectBaseDir="${CI_PROJECT_DIR}" -Dsonar.host.url="${SONAR_URL}" -Dsonar.token="${SONAR_AUTH}"
   rules:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
