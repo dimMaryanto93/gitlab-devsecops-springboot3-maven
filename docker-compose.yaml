@@ -1,0 +1,11 @@
+version: '3.9'
+services:
+  apps:
+    image: dimmaryanto93/demo-devsecops:springboot3-maven
+    build:
+      dockerfile: Dockerfile
+      args:
+        - JAR_FILE=spring3-devsecops-example.jar
+      context: ./
+    ports:
+      - "8080:8080"
