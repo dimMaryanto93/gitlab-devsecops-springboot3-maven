@@ -1,0 +1,113 @@
+stages:
+  - pre-build
+  - test
+  - build
+  - publish
+  - deploy
+
+default:
+  tags:
+    - docker
+
+variables:
+  MAVEN_JDK_VERSION: "3.8.5-openjdk-17"
+  DOCKER_VERSION: "stable"
+  DOCKER_DIND_VERSION: "18.09-dind"
+  DOCKER_BUILD_ARGS_ENTRIPOINT: "--build-arg JAR_FILE=$JAR_FILE"
+
+get-fact-project-info:
+  image: maven:${MAVEN_JDK_VERSION}
+  cache:
+    paths:
+      - .m2/repository
+  stage: pre-build
+  script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_TAG
+    - MVN_BUILD_FILE_NAME=$(mvn -s $M2_SETTINGS_XML -N -q -DforceStdout help:evaluate -Dexpression="project.build.finalName").jar
+    - MVN_PROJECT_NAME=$(mvn -s $M2_SETTINGS_XML -N -q -DforceStdout help:evaluate -Dexpression="project.artifactId")
+    - MVN_PROJECT_GROUP_ID=$(mvn -s $M2_SETTINGS_XML -N -q -DforceStdout help:evaluate -Dexpression="project.groupId")
+    - echo "JAR_FILE=$MVN_BUILD_FILE_NAME" >> deploy.env
+    - echo "PROJECT_NAME=${MVN_PROJECT_NAME}" >> deploy.env
+    - echo "PROJECT_GROUP_ID=${MVN_PROJECT_GROUP_ID}" >> deploy.env
+    - echo "CI_PARENT_PROJECT_NAME=${MVN_PROJECT_NAME}" >> deploy.env
+    - echo "CI_PARENT_PROJECT_GROUP_ID=${MVN_PROJECT_GROUP_ID}" >> deploy.env
+    - echo "CI_PARENT_COMMIT_TAG=${CI_COMMIT_TAG}" >> deploy.env
+    - echo "CI_PARENT_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}" >> deploy.env
+    - echo "CI_PARENT_PIPELINE_PROJECT_ID=${CI_PROJECT_ID}" >> deploy.env
+  artifacts:
+    name: $CI_PROJECT_NAME-$CI_COMMIT_SHORT_SHA
+    paths:
+      - deploy.env
+    reports:
+      dotenv: deploy.env
+
+test-junit:
+  image: maven:${MAVEN_JDK_VERSION}
+  cache:
+    paths:
+      - .m2/repository
+  stage: test
+  before_script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_TAG
+  script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS test
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+        - target/failsafe-reports/TEST-*.xml
+
+build-jar:
+  image: maven:${MAVEN_JDK_VERSION}
+  cache:
+    paths:
+      - .m2/repository
+  stage: build
+  before_script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_TAG
+  script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+    name: $CI_PROJECT_NAME-$CI_COMMIT_TAG
+
+build-docker:
+  stage: publish
+  image: docker:${DOCKER_VERSION}
+  services:
+    - name: docker:${DOCKER_DIND_VERSION}
+      entrypoint: ["dockerd-entrypoint.sh"]
+      command: [
+        "--insecure-registry=private.nexus-registry.docker.local:8087",
+        "--insecure-registry=private.nexus-registry.docker.local:8086"
+      ]
+      alias: dockerd
+  needs:
+    - build-jar
+  variables:
+    DOCKER_HOST: tcp://dockerd:2375
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_BUILD_ARGS_ENTRIPOINT: ""
+    DOCKERFILE_LOCATION: "-f Dockerfile"
+    DOCKER_TAGS:
+      private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME
+    DOCKER_CONTEXT_PATH: "."
+  before_script:
+    - mkdir -p .docker/ && cat $DOCKER_CONF_JSON > .docker/config.json
+  script:
+    - docker build -q $DOCKERFILE_LOCATION $DOCKER_BUILD_ARGS_ENTRIPOINT -t $PROJECT_GROUP_ID/$PROJECT_NAME:latest $DOCKER_CONTEXT_PATH
+    - >
+      for TAG in ${DOCKER_TAGS};
+      do
+          echo "--------------------------------";
+          echo "docker image tag $TAG";
+          docker image tag $PROJECT_GROUP_ID/$PROJECT_NAME:latest $TAG:$CI_COMMIT_REF_SLUG
+          docker image tag $PROJECT_GROUP_ID/$PROJECT_NAME:latest $TAG:$CI_COMMIT_SHORT_SHA
+          echo "--------------------------------";
+          echo "docker image push $TAG";
+          docker --config .docker image push $TAG:$CI_COMMIT_REF_SLUG
+          docker --config .docker image push $TAG:$CI_COMMIT_SHORT_SHA
+          echo "--------------------------------";
+      done
