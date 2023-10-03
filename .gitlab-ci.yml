@@ -42,15 +42,47 @@ get-fact-project-info:
     reports:
       dotenv: deploy.env
 
-sonarcloud-check:
+test-junit:
+  stage: verify
+  allow_failure: true
+  image: maven:${MAVEN_JDK_VERSION}
+  cache:
+    paths:
+      - .m2/repository
+  before_script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_REF_SLUG
+  script:
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS test jacoco:prepare-agent jacoco:report
+  artifacts:
+    paths:
+      - target/site/jacoco
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+        - target/failsafe-reports/TEST-*.xml
+
+coverage-testunit:
+  stage: visualize
+  image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.9
+  script:
+    # convert report from jacoco to cobertura, using relative project path
+    - python /opt/cover2cover.py target/site/jacoco/jacoco.xml $CI_PROJECT_DIR/src/main/java/ > target/site/cobertura.xml
+  needs:
+    - test-junit
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: target/site/cobertura.xml
+
+sonarqube-check:
   stage: verify
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "1"
     SONAR_SCANNER_OPTS: "-Xmx512m"
-    SONAR_SRC_DIR: "src"
   needs:
-    - get-fact-project-info
+    - test-junit
   image:
     name: maven:${MAVEN_JDK_VERSION}
   cache:
@@ -61,23 +93,6 @@ sonarcloud-check:
     - mvn verify sonar:sonar -Dsonar.projectBaseDir="${CI_PROJECT_DIR}" -Dsonar.host.url="${SONAR_URL}" -Dsonar.token="${SONAR_AUTH}"
   rules:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
-
-test-junit:
-  allow_failure: true
-  image: maven:${MAVEN_JDK_VERSION}
-  cache:
-    paths:
-      - .m2/repository
-  stage: test
-  before_script:
-    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_REF_SLUG
-  script:
-    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS test
-  artifacts:
-    reports:
-      junit:
-        - target/surefire-reports/TEST-*.xml
-        - target/failsafe-reports/TEST-*.xml
 
 build-jar:
   image: maven:${MAVEN_JDK_VERSION}
