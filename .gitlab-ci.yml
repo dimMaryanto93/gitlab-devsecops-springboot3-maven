@@ -62,7 +62,7 @@ test-junit:
         - target/failsafe-reports/TEST-*.xml
 
 coverage-testunit:
-  stage: visualize
+  stage: verify
   image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.9
   script:
     # convert report from jacoco to cobertura, using relative project path
