@@ -61,7 +61,6 @@ sonarcloud-check:
   script:
     - sonar-scanner \
       -Dsonar.projectVersion='$CI_COMMIT_REF_SLUG' \
-      -Dsonar.projectBaseDir='${CI_PROJECT_DIR}' \
       -Dsonar.host.url='${SONAR_URL}' \
       -Dsonar.login='${AUTH_SONAR}'
   rules:
