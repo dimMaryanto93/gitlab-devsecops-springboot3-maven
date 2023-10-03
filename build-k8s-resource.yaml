@@ -29,7 +29,7 @@ spec:
       name: spring3-devsecops
     spec:
       containers:
-      - image: 10.12.1.20:8086/com.maryanto.dimas.example/spring3-devsecops-example:fe814816
+      - image: 10.12.1.20:8086/com.maryanto.dimas.example/spring3-devsecops-example:f3429914
         imagePullPolicy: IfNotPresent
         name: spring3-devsecops
         ports:
