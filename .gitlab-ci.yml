@@ -10,6 +10,7 @@ default:
     - docker
 
 variables:
+  DEFAULT_MAVEN_CLI_OPTS: "--show-version -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
   MAVEN_JDK_VERSION: "3.8.5-openjdk-17"
   DOCKER_VERSION: "stable"
   DOCKER_DIND_VERSION: "18.09-dind"
