@@ -159,6 +159,3 @@ container_scanning:
     CS_DISABLE_DEPENDENCY_LIST: "true"
     CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
     CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-  artifacts:
-    reports:
-      container_scanning: 'gl-container-scanning-report.json'
