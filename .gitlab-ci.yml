@@ -14,7 +14,6 @@ variables:
   MAVEN_JDK_VERSION: "3.8.5-openjdk-17"
   DOCKER_VERSION: "stable"
   DOCKER_DIND_VERSION: "18.09-dind"
-  DOCKER_BUILD_ARGS_ENTRIPOINT: "--build-arg JAR_FILE=$JAR_FILE"
 
 get-fact-project-info:
   image: maven:${MAVEN_JDK_VERSION}
@@ -93,7 +92,7 @@ build-docker:
     DOCKER_HOST: tcp://dockerd:2375
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
-    DOCKER_BUILD_ARGS_ENTRIPOINT: ""
+    DOCKER_BUILD_ARGS_ENTRIPOINT: "--build-arg JAR_FILE=$JAR_FILE"
     DOCKERFILE_LOCATION: "-f Dockerfile"
     DOCKER_TAGS:
       private.nexus-registry.docker.local:8087/$PROJECT_GROUP_ID/$PROJECT_NAME
