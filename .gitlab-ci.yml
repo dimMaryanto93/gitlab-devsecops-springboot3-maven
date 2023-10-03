@@ -147,6 +147,7 @@ build-docker:
 container_scanning:
   stage: publish
   needs:
+    - get-fact-project-info
     - build-docker
   variables:
     DOCKER_HOST: unix:///var/run/docker.sock
@@ -164,9 +165,10 @@ container_scanning:
     reports:
       container_scanning: 'gl-container-scanning-report.json'
 
-build-configmap:
+build-k8s-resource:
   stage: deploy
   needs:
+    - get-fact-project-info
     - build-docker
   extends: .kustomize-build
   resource_group: deploy/review
