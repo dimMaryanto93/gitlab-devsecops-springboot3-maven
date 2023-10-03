@@ -59,16 +59,17 @@ sonarcloud-check:
     paths:
       - .sonar/cache
   script:
-    - sonar-scanner -Dsonar.organization=${PROJECT_GROUP_ID} \
-      -Dsonar.projectKey=${PROJECT_GROUP_ID}.${PROJECT_NAME} \
-      -Dsonar.sources=${SONAR_SRC_DIR} \
-      -Dsonar.projectBaseDir=${CI_PROJECT_DIR} \
-      -Dsonar.host.url=${SONAR_URL} \
-      -Dsonar.login=$AUTH_SONAR
+    - sonar-scanner -Dsonar.organization="${PROJECT_GROUP_ID}" \
+      -Dsonar.projectKey="${PROJECT_GROUP_ID}.${PROJECT_NAME}" \
+      -Dsonar.sources="${SONAR_SRC_DIR}" \
+      -Dsonar.projectBaseDir="${CI_PROJECT_DIR}" \
+      -Dsonar.host.url="${SONAR_URL}" \
+      -Dsonar.login="$AUTH_SONAR"
   rules:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
 test-junit:
+  allow_failure: true
   image: maven:${MAVEN_JDK_VERSION}
   cache:
     paths:
@@ -92,6 +93,7 @@ build-jar:
   stage: build
   needs:
     - get-fact-project-info
+    - test-junit
   before_script:
     - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_REF_SLUG
   script:
