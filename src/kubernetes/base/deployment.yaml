@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring3-devsecops
+  labels:
+    app: spring3-devsecops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring3-devsecops
+  template:
+    metadata:
+      name: spring3-devsecops
+      labels:
+        app: spring3-devsecops
+    spec:
+      containers:
+        - name: spring3-devsecops
+          image: 10.12.1.20:8086/com.maryanto.dimas.example/spring3-devsecops-example:main
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+      restartPolicy: Always
