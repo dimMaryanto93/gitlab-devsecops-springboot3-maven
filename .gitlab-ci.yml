@@ -22,7 +22,7 @@ get-fact-project-info:
       - .m2/repository
   stage: pre-build
   script:
-    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_TAG
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_REF_SLUG
     - MVN_BUILD_FILE_NAME=$(mvn -s $M2_SETTINGS_XML -N -q -DforceStdout help:evaluate -Dexpression="project.build.finalName").jar
     - MVN_PROJECT_NAME=$(mvn -s $M2_SETTINGS_XML -N -q -DforceStdout help:evaluate -Dexpression="project.artifactId")
     - MVN_PROJECT_GROUP_ID=$(mvn -s $M2_SETTINGS_XML -N -q -DforceStdout help:evaluate -Dexpression="project.groupId")
@@ -48,7 +48,7 @@ test-junit:
       - .m2/repository
   stage: test
   before_script:
-    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_TAG
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_REF_SLUG
   script:
     - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS test
   artifacts:
@@ -63,14 +63,16 @@ build-jar:
     paths:
       - .m2/repository
   stage: build
+  needs:
+    - get-fact-project-info
   before_script:
-    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_TAG
+    - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS versions:set -DnewVersion=$CI_COMMIT_REF_SLUG
   script:
     - mvn -s $M2_SETTINGS_XML $DEFAULT_MAVEN_CLI_OPTS package -DskipTests
   artifacts:
     paths:
       - target/*.jar
-    name: $CI_PROJECT_NAME-$CI_COMMIT_TAG
+    name: $CI_PROJECT_NAME-$CI_COMMIT_REF_SLUG
 
 build-docker:
   stage: publish
@@ -84,6 +86,7 @@ build-docker:
       ]
       alias: dockerd
   needs:
+    - get-fact-project-info
     - build-jar
   variables:
     DOCKER_HOST: tcp://dockerd:2375
