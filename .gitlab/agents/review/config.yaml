@@ -1,7 +1,7 @@
 gitops:
   manifest_projects:
     - ref:
-        branch: review-env
+        branch: k8s-review
       id: examples/gitlab-ci-cd/gitlab-devsecops-springboot3-maven
       paths:
         - glob: '*.yaml'
