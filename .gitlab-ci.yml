@@ -145,11 +145,12 @@ build-docker:
 
 container_scanning:
   stage: publish
-  tags:
-    - docker_host
   needs:
     - build-docker
   variables:
+    DOCKER_HOST: unix:///var/run/docker.sock
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
     GIT_STRATEGY: 1
     SECURE_LOG_LEVEL: debug
     CS_DOCKER_INSECURE: "true"
@@ -160,4 +161,4 @@ container_scanning:
     CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
   artifacts:
     reports:
-      container_scanning: ['**/gl-sbom-*.cdx.json', 'gl-container-scanning-report.json', 'gl-dependency-scanning-report.json']
+      container_scanning: 'gl-container-scanning-report.json'
