@@ -1,14 +1,15 @@
 stages:
   - pre-build
-  - verify
   - test
   - build
   - publish
   - scanning
   - deploy
+  - verify
 
 include:
   - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Verify/Browser-Performance.gitlab-ci.yml
   - remote: 'https://raw.githubusercontent.com/dimMaryanto93/gitlab-devops-automation/gitlab-kas/templates/gitops-flow.gitlab-ci.yml'
 
 default:
@@ -47,7 +48,7 @@ get-fact-project-info:
       dotenv: deploy.env
 
 test-junit:
-  stage: verify
+  stage: test
   allow_failure: true
   image: maven:${MAVEN_JDK_VERSION}
   cache:
@@ -66,7 +67,7 @@ test-junit:
         - target/failsafe-reports/TEST-*.xml
 
 sonarqube-check:
-  stage: verify
+  stage: test
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
     GIT_DEPTH: "1"
@@ -85,11 +86,11 @@ sonarqube-check:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
 build-jar:
+  stage: build
   image: maven:${MAVEN_JDK_VERSION}
   cache:
     paths:
       - .m2/repository
-  stage: build
   needs:
     - get-fact-project-info
     - test-junit
@@ -152,7 +153,7 @@ build-docker:
       dotenv: deploy.env
 
 container_scanning:
-  stage: publish
+  stage: scanning
   needs:
     - build-docker
   variables:
@@ -165,19 +166,35 @@ container_scanning:
     CS_REGISTRY_INSECURE: "true"
     CS_DISABLE_DEPENDENCY_LIST: "true"
     CS_DOCKERFILE_PATH: $CI_PROJECT_DIR/Dockerfile
-#    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA ## this variable not detect by container scanning
+    #    CS_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA ## this variable not detect by container scanning
     CS_IMAGE: private.nexus-registry.docker.local:8087/com.maryanto.dimas.example/spring3-devsecops-example:$CI_COMMIT_SHORT_SHA # FIXME changed this line
   artifacts:
     reports:
       container_scanning: 'gl-container-scanning-report.json'
 
-build-k8s-resource:
+deploy-k8s-review:
   stage: deploy
   needs:
     - build-docker
-  extends: .kustomize-build
-  resource_group: deploy/review
   variables:
     GIT_REMOTE_BRANCH: k8s-review
     KUBERNETES_MANIFEST_TEMPLATES:
       src/kubernetes/overlays/ci
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG
+    url: http://10.12.1.202:30001
+  extends: .kustomize-build
+  resource_group: deploy/review
+  after_script:
+    - echo $CI_ENVIRONMENT_URL > environment_url.txt
+  artifacts:
+    paths:
+      - environment_url.txt
+
+browser_performance:
+  stage: verify
+  dependencies:
+    - deploy-k8s-review
+  variables:
+    URL: environment_url.txt
+    SITESPEED_OPTIONS: -n 5
