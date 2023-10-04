@@ -5,11 +5,11 @@ stages:
   - publish
   - scanning
   - deploy
-  - verify
+  - performance
 
 include:
   - template: Security/Container-Scanning.gitlab-ci.yml
-  - template: Verify/Browser-Performance.gitlab-ci.yml
+  - template: Verify/Browser-Performance.latest.gitlab-ci.yml
   - remote: 'https://raw.githubusercontent.com/dimMaryanto93/gitlab-devops-automation/gitlab-kas/templates/gitops-flow.gitlab-ci.yml'
 
 default:
@@ -192,9 +192,16 @@ deploy-k8s-review:
       - environment_url.txt
 
 browser_performance:
-  stage: verify
+  stage: performance
+  services:
+    - name: docker:${DOCKER_DIND_VERSION}
+      entrypoint: [ "dockerd-entrypoint.sh" ]
+      alias: dockerd
   dependencies:
     - deploy-k8s-review
   variables:
     URL: environment_url.txt
     SITESPEED_OPTIONS: -n 5
+    DOCKER_HOST: tcp://dockerd:2375
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
