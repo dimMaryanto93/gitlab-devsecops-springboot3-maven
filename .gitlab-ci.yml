@@ -9,6 +9,7 @@ stages:
 
 include:
   - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/SAST-IaC.gitlab-ci.yml
 #  - template: Verify/Browser-Performance.latest.gitlab-ci.yml
   - remote: 'https://raw.githubusercontent.com/dimMaryanto93/gitlab-devops-automation/gitlab-kas/templates/gitops-flow.gitlab-ci.yml'
 
