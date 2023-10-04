@@ -65,6 +65,8 @@ test-junit:
       junit:
         - target/surefire-reports/TEST-*.xml
         - target/failsafe-reports/TEST-*.xml
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
 sonarqube-check:
   stage: test
@@ -193,15 +195,74 @@ deploy-k8s-review:
 
 #browser_performance:
 #  stage: performance
-#  services:
-#    - name: docker:${DOCKER_DIND_VERSION}
-#      entrypoint: [ "dockerd-entrypoint.sh" ]
-#      alias: dockerd
+#  image: docker:${DOCKER_VERSION}
+#  allow_failure: true
 #  dependencies:
 #    - deploy-k8s-review
 #  variables:
 #    URL: environment_url.txt
-#    SITESPEED_OPTIONS: -n 5
 #    DOCKER_HOST: tcp://dockerd:2375
 #    DOCKER_DRIVER: overlay2
 #    DOCKER_TLS_CERTDIR: ""
+#    SITESPEED_IMAGE: sitespeedio/sitespeed.io
+#    SITESPEED_VERSION: 26.1.0
+#    SITESPEED_OPTIONS: ''
+#  services:
+#    - name: docker:${DOCKER_DIND_VERSION}
+#      entrypoint: [ "dockerd-entrypoint.sh" ]
+#      command: [
+#        "--insecure-registry=private.nexus-registry.docker.local:8087",
+#        "--insecure-registry=private.nexus-registry.docker.local:8086"
+#      ]
+#      alias: dockerd
+#  script:
+#    - CI_ENVIRONMENT_URL="$(cat environment_url.txt)"
+#    - export CI_ENVIRONMENT_URL
+#    - mkdir gitlab-exporter
+#    - (env | grep -i _proxy= >/dev/null 2>&1) && apk --no-cache add wget
+#    - wget -O gitlab-exporter/index.js https://gitlab.com/gitlab-org/gl-performance/raw/1.1.0/index.js
+#    - mkdir sitespeed-results
+#    - |
+#      function propagate_env_vars() {
+#        CURRENT_ENV=$(printenv)
+#
+#        for VAR_NAME; do
+#          echo $CURRENT_ENV | grep "${VAR_NAME}=" > /dev/null && echo "--env $VAR_NAME "
+#        done
+#      }
+#    - |
+#      if [ -f .gitlab-urls.txt ]
+#      then
+#        sed -i -e 's@^@'"$CI_ENVIRONMENT_URL"'@' .gitlab-urls.txt
+#        docker run \
+#          $(propagate_env_vars \
+#            auto_proxy \
+#            https_proxy \
+#            http_proxy \
+#            no_proxy \
+#            AUTO_PROXY \
+#            HTTPS_PROXY \
+#            HTTP_PROXY \
+#            NO_PROXY \
+#          ) \
+#          --shm-size=1g --rm -v "$(pwd)":/sitespeed.io $SITESPEED_IMAGE:$SITESPEED_VERSION --plugins.add ./gitlab-exporter --cpu --outputFolder sitespeed-results .gitlab-urls.txt $SITESPEED_OPTIONS
+#      else
+#        docker run \
+#          $(propagate_env_vars \
+#            auto_proxy \
+#            https_proxy \
+#            http_proxy \
+#            no_proxy \
+#            AUTO_PROXY \
+#            HTTPS_PROXY \
+#            HTTP_PROXY \
+#            NO_PROXY \
+#          ) \
+#          --shm-size=1g --rm -v "$(pwd)":/sitespeed.io $SITESPEED_IMAGE:$SITESPEED_VERSION --plugins.add ./gitlab-exporter --cpu --outputFolder sitespeed-results "$CI_ENVIRONMENT_URL" $SITESPEED_OPTIONS
+#      fi
+#    - mv sitespeed-results/data/performance.json browser-performance.json
+#  artifacts:
+#    paths:
+#      - sitespeed-results/
+#    reports:
+#      browser_performance: browser-performance.json
