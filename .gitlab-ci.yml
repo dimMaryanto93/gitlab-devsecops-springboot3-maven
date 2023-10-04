@@ -88,6 +88,11 @@ sonarqube-check:
   rules:
     - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
 
+iac-sast:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_REF_NAME == 'main' || $CI_PIPELINE_SOURCE == 'merge_request_event'
+
 build-jar:
   stage: build
   image: maven:${MAVEN_JDK_VERSION}
