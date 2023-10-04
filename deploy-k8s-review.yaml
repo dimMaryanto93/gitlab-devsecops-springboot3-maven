@@ -19,7 +19,7 @@ metadata:
     app: spring3-devsecops
   name: spring3-devsecops
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: spring3-devsecops
