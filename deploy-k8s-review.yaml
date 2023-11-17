@@ -19,7 +19,7 @@ metadata:
     app: spring3-devsecops
   name: spring3-devsecops
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: spring3-devsecops
@@ -30,7 +30,7 @@ spec:
       name: spring3-devsecops
     spec:
       containers:
-      - image: 10.12.1.20:8086/com.maryanto.dimas.example/spring3-devsecops-example:035be63d
+      - image: 10.12.1.20:8086/com.maryanto.dimas.example/spring3-devsecops-example:93e96cea
         imagePullPolicy: IfNotPresent
         name: spring3-devsecops
         ports:
